@@ -2,7 +2,6 @@ import numpy as np
 import nnfs
 from nnfs.datasets import spiral_data
 import matplotlib.pyplot as plt
-from get_data import create_data_mnist
 
 
 nnfs.init()
@@ -253,85 +252,75 @@ class Optimizer_SGD:
         self.iterations += 1
 
 
-# X, y = spiral_data(1000, 3)  
+X, y = spiral_data(1000, 3)  
 
-X, y, X_test, y_test = create_data_mnist('fashion_mnist_images')
+dense1 = Layer_Dense(2, 64, weight_regularizer_l2=5e-4, bias_regularizer_l2=5e-4)
+activation1 = Activation_ReLU()
+dense2 = Layer_Dense(64, 3)
+loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 
-# Scale features
-X = (X.astype(np.float32) - 127.5) / 127.5
-X_test = (X_test.astype(np.float32) - 127.5) / 127.5
+optimizer = Optimizer_SGD(decay=1e-3, momentum=0.9)
 
-print(X.min(), X.max())
-print(X.shape)
-
-
-# dense1 = Layer_Dense(2, 256, weight_regularizer_l2=5e-4, bias_regularizer_l2=5e-4)
-# activation1 = Activation_ReLU()
-# dense2 = Layer_Dense(256, 3)
-# loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
-
-# optimizer = Optimizer_SGD(decay=1e-3, momentum=0.9)
-
-# accuracies = []
-# losses = []
-# learning_rate = []
+accuracies = []
+losses = []
+learning_rate = []
 
 # model training
-# for epoch in range(10001):
-#     dense1.forward(X)
-#     activation1.forward(dense1.output)
-#     dense2.forward(activation1.output)
-#     data_loss = loss_activation.forward(dense2.output, y)
+for epoch in range(10001):
+    dense1.forward(X)
+    activation1.forward(dense1.output)
+    dense2.forward(activation1.output)
+    data_loss = loss_activation.forward(dense2.output, y)
 
-#     regularization_loss = \
-#         loss_activation.loss.regularization_loss(dense1) + \
-#         loss_activation.loss.regularization_loss(dense2)
+    regularization_loss = \
+        loss_activation.loss.regularization_loss(dense1) + \
+        loss_activation.loss.regularization_loss(dense2)
 
-#     loss = data_loss + regularization_loss
+    loss = data_loss + regularization_loss
 
-#     predictions = np.argmax(loss_activation.output, axis=1)
-#     if len(y.shape) == 2:
-#         y = np.argmax(y, axis=1)
-#     accuracy = np.mean(predictions==y)
+    predictions = np.argmax(loss_activation.output, axis=1)
+    if len(y.shape) == 2:
+        y = np.argmax(y, axis=1)
+    accuracy = np.mean(predictions==y)
 
 
-#     if not epoch % 100:
-#         accuracies.append(accuracy)
-#         losses.append(loss)
-#         learning_rate.append(optimizer.current_learning_rate)
-#         print(f'epoch: {epoch}, ' + f'acc: {accuracy:.3f}, ' + f'loss: {loss:.3f}, ' + f'lr: {optimizer.current_learning_rate}')
+    if not epoch % 100:
+        accuracies.append(accuracy)
+        losses.append(loss)
+        learning_rate.append(optimizer.current_learning_rate)
+        print(f'epoch: {epoch}, ' + f'acc: {accuracy:.3f}, ' + f'loss: {loss:.3f}, ' + f'lr: {optimizer.current_learning_rate}')
 
-#     loss_activation.backward(loss_activation.output, y)
-#     dense2.backward(loss_activation.dinputs)
-#     activation1.backward(dense2.dinputs)
-#     dense1.backward(activation1.dinputs)
+    loss_activation.backward(loss_activation.output, y)
+    dense2.backward(loss_activation.dinputs)
+    activation1.backward(dense2.dinputs)
+    dense1.backward(activation1.dinputs)
 
-#     optimizer.pre_update_params()
-#     optimizer.update_params(dense1)
-#     optimizer.update_params(dense2)
-#     optimizer.post_update_params()
+    optimizer.pre_update_params()
+    optimizer.update_params(dense1)
+    optimizer.update_params(dense2)
+    optimizer.post_update_params()
 
-# epochs = range(0, 10001, 100) 
-# plt.figure(figsize=(10, 5))
-# plt.plot(epochs, accuracies, label='Accuracy', marker='o', color="blue")
-# plt.plot(epochs, losses, label='Loss', marker='o', color='red')
-# plt.plot(epochs, learning_rate, label='Learning Rate', marker='o', color='black')
-# plt.title('Training Metrics over Epochs')
-# plt.xlabel('Epochs')
-# plt.ylabel('Value')
-# plt.legend()
-# plt.savefig('training_metrics_plot.png')
+epochs = range(0, 10001, 100) 
+plt.figure(figsize=(10, 5))
+plt.plot(epochs, accuracies, label='Accuracy', marker='o', color="blue")
+plt.plot(epochs, losses, label='Loss', marker='o', color='red')
+plt.plot(epochs, learning_rate, label='Learning Rate', marker='o', color='black')
+plt.title('Training Metrics over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Value')
+plt.legend()
+plt.savefig('training_metrics_plot.png')
 # plt.show()
 
 # Validate the model
 
-# X_test, y_test = spiral_data(samples=100, classes=3)
-# dense1.forward(X_test)
-# activation1.forward(dense1.output)
-# dense2.forward(activation1.output)
-# loss = loss_activation.forward(dense2.output, y_test)
-# predictions = np.argmax(loss_activation.output, axis=1)
-# if len(y_test.shape) == 2:
-#     y_test = np.argmax(y_test, axis=1)
-# accuracy = np.mean(predictions==y_test)
-# print(f'validation, acc: {accuracy:.3f}, loss: {loss:.3f}')
+X_test, y_test = spiral_data(samples=100, classes=3)
+dense1.forward(X_test)
+activation1.forward(dense1.output)
+dense2.forward(activation1.output)
+loss = loss_activation.forward(dense2.output, y_test)
+predictions = np.argmax(loss_activation.output, axis=1)
+if len(y_test.shape) == 2:
+    y_test = np.argmax(y_test, axis=1)
+accuracy = np.mean(predictions==y_test)
+print(f'validation, acc: {accuracy:.3f}, loss: {loss:.3f}')
